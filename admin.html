@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+
+<title>SV Legal — Admin Panel</title>
+
+<style>
+body{
+    background:#0b0d12; color:white;
+    margin:0; font-family: Inter, sans-serif;
+    text-align:center;
+}
+h1{margin-top:50px;color:#ffd54a;}
+table{width:90%; margin:20px auto; border-collapse:collapse;}
+th,td{padding:10px;border-bottom:1px solid #252525;}
+input{padding:10px;border-radius:6px; width:260px;}
+button{
+    background:#f4c542;color:black;padding:10px 16px;
+    border:none;border-radius:6px;cursor:pointer;font-weight:bold;
+}
+#dashboard{display:none;margin-top:40px;}
+</style>
+</head>
+
+<body>
+<h1>Admin Access</h1>
+
+<div id="loginBox">
+<input type="password" id="adminPass" placeholder="Enter Admin Password"><br><br>
+<button onclick="loginAdmin()">Login</button>
+</div>
+
+<div id="dashboard">
+<h1>📁 Incoming Requests</h1>
+<br><button onclick="loadData()">Refresh</button><br><br>
+
+<table>
+<thead>
+<tr style="background:#10131a;">
+<th>Name</th><th>Form Type</th><th>Mobile</th><th>Date</th><th>Document</th>
+</tr>
+</thead>
+<tbody id="requestData"></tbody>
+</table>
+</div>
+
+<script>
+const backend = "http://localhost:6000";
+
+// Auto login restore
+if(localStorage.getItem("adminAuth") === "true"){ showPanel(); }
+
+function loginAdmin(){
+    if(document.getElementById("adminPass").value === "wL15MMMiDA6mYo3X"){
+        localStorage.setItem("adminAuth","true");
+        showPanel();
+    } else alert("Incorrect Password ❌");
+}
+
+function showPanel(){
+    document.getElementById("loginBox").style.display="none";
+    document.getElementById("dashboard").style.display="block";
+    loadData();
+}
+
+async function loadData(){
+    try{
+        let res = await fetch(`${backend}/api/requests`);
+        let data = await res.json();
+
+        document.getElementById("requestData").innerHTML=
+            data.map(r=>`
+            <tr>
+                <td>${r.name}</td>
+                <td>${r.formType}</td>
+                <td>${r.mobile}</td>
+                <td>${new Date(r.createdAt).toLocaleDateString()}</td>
+                <td><button onclick="openDoc('${r.document}')">View</button></td>
+            </tr>`).join("");
+
+    }catch(e){
+        alert("⚠ Backend Offline");
+    }
+}
+
+function openDoc(pdf){
+    let w = window.open();
+    w.document.write(`<iframe src="${pdf}" width="100%" height="100%"></iframe>`);
+}
+</script>
+
+</body>
+</html>
