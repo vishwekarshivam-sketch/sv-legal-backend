@@ -16,7 +16,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-router.post("/upload", upload.single("document"), async (req, res) => {
+router.post("/", upload.single('document'), async (req, res) => {
     const newReq = new Request({
         ...req.body,
         documentPath: req.file?.filename || null
