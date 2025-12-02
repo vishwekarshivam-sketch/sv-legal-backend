@@ -1,15 +1,11 @@
-// models/CallLog.js
 import mongoose from "mongoose";
 
-const CallLogSchema = new mongoose.Schema(
-  {
-    callerName: { type: String },
-    phone: { type: String },
-    timestamp: { type: Date, default: Date.now },
-    notes: { type: String },
-    assignedTo: { type: String },
-  },
-  { versionKey: false }
-);
+const CallLogSchema = new mongoose.Schema({
+  name: String,
+  phone: String,
+  time: String,
+  notes: String,
+  createdAt: { type: Date, default: Date.now }
+});
 
-export default mongoose.models.CallLog || mongoose.model("CallLog", CallLogSchema);
+export default mongoose.model("CallLog", CallLogSchema);
