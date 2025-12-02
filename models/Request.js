@@ -12,3 +12,4 @@ const RequestSchema = new mongoose.Schema({
 });
 
 export default mongoose.model("Request", RequestSchema);
+status: { type: String, default: "pending" }

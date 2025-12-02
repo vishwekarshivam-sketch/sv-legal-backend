@@ -1,94 +1,111 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-
-<title>SV Legal — Admin Panel</title>
-
+<title>SV Legal — Admin Dashboard</title>
 <style>
-body{
-    background:#0b0d12; color:white;
-    margin:0; font-family: Inter, sans-serif;
-    text-align:center;
-}
-h1{margin-top:50px;color:#ffd54a;}
-table{width:90%; margin:20px auto; border-collapse:collapse;}
-th,td{padding:10px;border-bottom:1px solid #252525;}
-input{padding:10px;border-radius:6px; width:260px;}
-button{
-    background:#f4c542;color:black;padding:10px 16px;
-    border:none;border-radius:6px;cursor:pointer;font-weight:bold;
-}
-#dashboard{display:none;margin-top:40px;}
+    body{
+        background:#0c0c0c;
+        color:white;
+        font-family:Arial, sans-serif;
+        text-align:center;
+    }
+    h2{ margin-top:40px; font-size:26px; color:#ffcc00; letter-spacing:.5px;}
+    table{
+        margin:auto; width:90%; margin-top:25px; border-collapse:collapse;
+        background:#111; color:white;
+    }
+    th,td{
+        padding:12px; border-bottom:1px solid #222; text-align:center;
+    }
+    th{ background:#161616; color:#ffcc00; font-size:15px;}
+    button{
+        padding:8px 14px; background:#ffcc00; border:none; border-radius:4px;
+        font-weight:bold; cursor:pointer;
+    }
+    button:hover{ opacity:.85;}
+    #loginBox{
+        margin-top:120px;
+    }
+    input{
+        padding:8px 10px; width:260px; border-radius:4px; border:none;
+        font-size:16px; outline:none;
+    }
 </style>
 </head>
 
 <body>
-<h1>Admin Access</h1>
+
+<h2>Admin Access</h2>
 
 <div id="loginBox">
-<input type="password" id="adminPass" placeholder="Enter Admin Password"><br><br>
-<button onclick="loginAdmin()">Login</button>
+    <input type="password" id="adminPass" placeholder="Enter Admin Password">
+    <br><br>
+    <button onclick="adminLogin()">Login</button>
 </div>
 
-<div id="dashboard">
-<h1>📁 Incoming Requests</h1>
-<br><button onclick="loadData()">Refresh</button><br><br>
+<div id="panel" style="display:none;">
+    <h2>📄 Incoming Requests</h2>
 
-<table>
-<thead>
-<tr style="background:#10131a;">
-<th>Name</th><th>Form Type</th><th>Mobile</th><th>Date</th><th>Document</th>
-</tr>
-</thead>
-<tbody id="requestData"></tbody>
-</table>
+    <button onclick="loadData()">Refresh</button>
+    <br><br>
+
+    <table id="reqTable">
+        <tr>
+            <th>Name</th>
+            <th>Form Type</th>
+            <th>Mobile</th>
+            <th>Date</th>
+            <th>Document</th>
+            <th>Status</th>
+        </tr>
+    </table>
 </div>
 
 <script>
-const backend = "http://localhost:6000";
+const API = "https://sv-legal-backend-production.up.railway.app"; // LIVE SERVER ✔
 
-// Auto login restore
-if(localStorage.getItem("adminAuth") === "true"){ showPanel(); }
+function adminLogin(){
+    let pass = document.getElementById("adminPass").value;
+    if(pass !== "sunil@svlegal"){ return alert("Wrong Password ❌"); }
 
-function loginAdmin(){
-    if(document.getElementById("adminPass").value === "wL15MMMiDA6mYo3X"){
-        localStorage.setItem("adminAuth","true");
-        showPanel();
-    } else alert("Incorrect Password ❌");
-}
-
-function showPanel(){
+    localStorage.setItem("sv_admin", "1");
     document.getElementById("loginBox").style.display="none";
-    document.getElementById("dashboard").style.display="block";
+    document.getElementById("panel").style.display="block";
     loadData();
 }
 
+window.onload = ()=>{
+    if(localStorage.getItem("sv_admin")=="1"){
+        document.getElementById("loginBox").style.display="none";
+        document.getElementById("panel").style.display="block";
+        loadData();
+    }
+};
+
 async function loadData(){
     try{
-        let res = await fetch(`${backend}/api/requests`);
-        let data = await res.json();
+        const res = await fetch(`${API}/admin/requests`);
+        const data = await res.json();
 
-        document.getElementById("requestData").innerHTML=
-            data.map(r=>`
-            <tr>
-                <td>${r.name}</td>
-                <td>${r.formType}</td>
-                <td>${r.mobile}</td>
-                <td>${new Date(r.createdAt).toLocaleDateString()}</td>
-                <td><button onclick="openDoc('${r.document}')">View</button></td>
-            </tr>`).join("");
+        let rows="";
+        data.forEach(x=>{
+            rows+=`
+                <tr>
+                    <td>${x.name}</td>
+                    <td>${x.formType}</td>
+                    <td>${x.mobile}</td>
+                    <td>${new Date(x.createdAt).toLocaleDateString()}</td>
+                    <td><a style="color:#00eaff;" target="_blank" href="${API}/uploads/${x.file}">Open</a></td>
+                    <td>${x.status || "Pending"}</td>
+                </tr>`;
+        });
 
-    }catch(e){
-        alert("⚠ Backend Offline");
+        document.getElementById("reqTable").innerHTML =
+            `<tr><th>Name</th><th>Form</th><th>Mobile</th><th>Date</th><th>Doc</th><th>Status</th></tr>` + rows;
     }
-}
-
-function openDoc(pdf){
-    let w = window.open();
-    w.document.write(`<iframe src="${pdf}" width="100%" height="100%"></iframe>`);
+    catch(e){ alert("Backend Offline / API Blocked"); }
 }
 </script>
-
 </body>
 </html>

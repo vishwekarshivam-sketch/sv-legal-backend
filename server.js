@@ -1,28 +1,38 @@
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
-import requestRoutes from "./routes/requestRoutes.js";
-import path from "path";
-import { fileURLToPath } from "url";
 import dotenv from "dotenv";
+
+import requestRoutes from "./routes/requestRoutes.js";
+import uploadRoutes from "./routes/uploadRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 dotenv.config();
 
 const app = express();
-app.use(express.json());
+
+// Middleware
 app.use(cors());
+app.use(express.json({ limit: "20mb" }));
+app.use(express.urlencoded({ extended: true, limit: "20mb" }));
 
-// Construct connection string safely (NO formatting error possible now)
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster.4qe3rqr.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority&appName=Cluster`;
+// MongoDB Connect
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB Connected"))
+  .catch((err) => console.error("DB Error:", err.message));
 
-mongoose.connect(uri)
-    .then(() => console.log("🟢 MongoDB Connected"))
-    .catch(err => console.log("❌ DB Error:", err.message));
+// Routes
+app.use("/requests", requestRoutes);
+app.use("/upload", uploadRoutes);
+app.use("/admin", adminRoutes);
 
-app.use("/admin/requests", requestRoutes);
+// Health check route
+app.get("/", (req, res) => {
+  res.send("Backend Active 🚀");
+});
 
-app.get("/", (req,res)=> res.send("Backend Active 🚀"));
-
-app.listen(process.env.PORT, () => {
-    console.log(`🚀 Server Running on PORT ${process.env.PORT}`);
+// Start server
+app.listen(process.env.PORT || 8080, () => {
+  console.log(`✔ Server Running on PORT ${process.env.PORT}`);
 });
